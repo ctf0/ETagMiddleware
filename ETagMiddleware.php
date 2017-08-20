@@ -16,21 +16,15 @@ class ETagMiddleware
      */
     public function handle($request, Closure $next)
     {
-        // Get response
         $response = $next($request);
-        // If this was a GET request...
-        if ($request->isMethod('get')) {
-            // Generate Etag
-            $etag        = md5($response->getContent());
-            $requestEtag = str_replace('"', '', $request->getETags());
-            // Check to see if Etag has changed
-            if ($requestEtag && $requestEtag[0] == $etag) {
-                $response->setNotModified();
-            }
-            // Set Etag
+
+        if ($request->isMethodCacheable()) {
+            $etag = md5($response->getContent());
             $response->setEtag($etag);
+            $response->setPublic();
+            $response->isNotModified($request);
         }
-        // Send response
+
         return $response;
     }
 }
